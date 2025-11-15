@@ -5,6 +5,7 @@ import { type Room } from "@/lib/storage"
 import ChatPanel from "./chat-panel"
 import VotingPanel from "./voting-panel"
 import MembersPanel from "./members-panel"
+import Chatbot from "./Chatbot" // ✅ AGREGAR ESTA LÍNEA
 import { initSocket, getSocket } from "@/lib/socket"
 import { useToast } from "@/hooks/use-toast"
 import roomService from "@/lib/api/rooms"
@@ -12,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Socket } from "socket.io-client" // ✅ Corregido: Usar "from" no "in"
+import { Socket } from "socket.io-client"
 
 // --- IMPORT DEL VIDEO ---
 import VideoCall from "./VideoCall"
@@ -32,11 +33,9 @@ export default function RoomDetail({ room, user, onBack }: RoomDetailProps) {
   const [editDescription, setEditDescription] = useState(room.description || "")
   const { toast } = useToast()
   
-  // --- ESTADO PARA EL SOCKET ---
   const [socket, setSocket] = useState<Socket | null>(null)
-  const [isClient, setIsClient] = useState(false) // ✅ Para evitar errores de hidratación
+  const [isClient, setIsClient] = useState(false)
 
-  // ✅ Establecer que estamos en el cliente
   useEffect(() => {
     setIsClient(true)
   }, [])
@@ -49,15 +48,12 @@ export default function RoomDetail({ room, user, onBack }: RoomDetailProps) {
       socketInstance = initSocket(token);
       setSocket(socketInstance);
 
-      // Unirse a la sala
       socketInstance.emit('joinRoom', room.code);
 
-      // Escuchar usuarios conectados
       socketInstance.on('roomUsers', (users: any[]) => {
         setConnectedUsers(users);
       });
 
-      // Listener: memberKicked
       socketInstance.on('memberKicked', (data: { kickedUserId: number; kickedBy: string }) => {
         setConnectedUsers(prev => prev.filter(u => u.userId !== data.kickedUserId));
         if (data.kickedUserId === user.id) {
@@ -70,7 +66,6 @@ export default function RoomDetail({ room, user, onBack }: RoomDetailProps) {
         }
       });
 
-      // Listener: kicked
       socketInstance.on('kicked', (data: { roomCode: string }) => {
         toast({
           title: "Expulsado",
@@ -80,7 +75,6 @@ export default function RoomDetail({ room, user, onBack }: RoomDetailProps) {
         onBack();
       });
 
-      // Limpiar al desmontar
       return () => {
         socketInstance.emit('leaveRoom', room.code);
         socketInstance.off('roomUsers');
@@ -150,7 +144,6 @@ export default function RoomDetail({ room, user, onBack }: RoomDetailProps) {
     }
   }
 
-  // ✅ Verificación antes de renderizar
   if (!isClient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -167,7 +160,6 @@ export default function RoomDetail({ room, user, onBack }: RoomDetailProps) {
     )
   }
   
-  // Estado de carga mientras se conecta el socket
   if (!socket) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -385,6 +377,9 @@ export default function RoomDetail({ room, user, onBack }: RoomDetailProps) {
           </div>
         </div>
       </div>
+
+      {/* ✅ CHATBOT - AGREGAR AQUÍ AL FINAL */}
+      <Chatbot roomName={room.name} activeTab={activeTab} />
     </div>
   )
 }

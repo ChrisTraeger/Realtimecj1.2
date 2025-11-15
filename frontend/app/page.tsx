@@ -1,6 +1,5 @@
 "use client"
 
-"use client"
 import { useAuth } from "@/lib/contexts/auth-context"
 import AuthPage from "@/components/auth/auth-page"
 import Dashboard from "@/components/dashboard/dashboard"
@@ -10,14 +9,21 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-cyan-50">
-        <div className="text-center">
+      <div 
+        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-cyan-50"
+        suppressHydrationWarning
+      >
+        <div className="text-center" suppressHydrationWarning>
           <div className="w-12 h-12 bg-emerald-400 rounded-full animate-pulse mx-auto mb-4"></div>
           <p className="text-emerald-600 font-medium">Cargando...</p>
         </div>
       </div>
     );
   }
+
+  const handleLogin = (user: { id: string; name: string; email: string }) => {
+    console.log("Usuario logueado:", user);
+  };
 
   return isAuthenticated && user ? (
     <Dashboard
@@ -29,8 +35,6 @@ export default function Home() {
       onLogout={logout}
     />
   ) : (
-    <AuthPage onLogin={function (user: { id: string; name: string; email: string }): void {
-        throw new Error("Function not implemented.")
-      } } />
+    <AuthPage onLogin={handleLogin} />
   );
 }

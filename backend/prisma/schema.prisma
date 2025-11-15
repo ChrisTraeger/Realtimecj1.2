@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  role      String
+  password  String
+  messages  Message[]
+  rooms     Room[]    @relation("RoomCreator")
+  joinedRooms RoomMember[]
+  votes     Vote[]
+  mentions  Mention[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  roomId    Int?
+  user      User     @relation(fields: [userId], references: [id])
+  room      Room?    @relation(fields: [roomId], references: [id])
+  mentions  Mention[]
+  createdAt DateTime @default(now())
+}
+
+model Mention {
+  id        Int     @id @default(autoincrement())
+  messageId Int
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  username  String  // Almacenar el username en el momento de la mención para evitar cambios
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId]) // Una mención por usuario por mensaje
+}
+
+model Room {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String   @unique
+  description String?
+  creatorId   Int
+  creator     User     @relation("RoomCreator", fields: [creatorId], references: [id])
+  isActive    Boolean  @default(true)
+  messages    Message[]
+  polls       Poll[]
+  members     RoomMember[]
+  createdAt   DateTime @default(now())
+}
+
+model RoomMember {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  roomId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  room      Room     @relation(fields: [roomId], references: [id])
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, roomId])
+}
+
+model Poll {
+  id          Int      @id @default(autoincrement())
+  question    String
+  roomId      Int
+  room        Room     @relation(fields: [roomId], references: [id])
+  options     PollOption[]
+  votes       Vote[]
+  isOpen      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  closedAt    DateTime?
+  deadline    DateTime?
+}
+
+model PollOption {
+  id       Int    @id @default(autoincrement())
+  text     String
+  pollId   Int
+  poll     Poll   @relation(fields: [pollId], references: [id])
+  votes    Vote[]
+}
+
+model Vote {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  pollId       Int
+  optionId     Int
+  user         User       @relation(fields: [userId], references: [id])
+  poll         Poll       @relation(fields: [pollId], references: [id])
+  option       PollOption @relation(fields: [optionId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, pollId])
+}

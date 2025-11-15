@@ -1,7 +1,7 @@
 'use client'; 
 import React, { useEffect, useRef, useState } from 'react';
 import { Video, VideoOff, Mic, MicOff } from 'lucide-react';
-
+import Chatbot from './Chatbot';
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
